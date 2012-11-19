@@ -1,0 +1,9 @@
+.*.el
+.#*
+.env
+*.pyc
+lib/
+bin/
+dist/
+local/
+include/
