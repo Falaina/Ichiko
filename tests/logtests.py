@@ -16,3 +16,4 @@ ichilog._patch_logging()
 
 log = ichilog.getlogger()
 log.info('hi')
+log.trace('wa')
