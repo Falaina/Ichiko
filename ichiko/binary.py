@@ -4,11 +4,23 @@ from collections import OrderedDict
 import bitstring
 
 class ConstBitStream(bitstring.ConstBitStream):
-    def readstring(self, num_bytes, encoding=None):
+    def readstrings(self, num_bytes, num_strings, encoding=None, max_bytes=4096):
+        strs = []
+        for _ in range(num_strings):
+            strs.append(self.readstring(num_bytes, encoding, max_bytes))
+        return strs
+
+    def readstring(self, num_bytes, encoding=None, max_bytes=4096):
+        if num_bytes > max_bytes:
+            raise ValueError('{} bytes exceed max_bytes of {} bytes'.format(num_bytes, max_bytes))
         str_bytes = self.read('bytes: {}'.format(num_bytes))
         if encoding:
             return str_bytes.decode(encoding)
         return str_bytes
+
+    def magicno(self, goal):
+        actual = self.read('bytes: {}'.format(len(goal)))
+        assert actual == goal, 'Magic No {} does not match goal {}'.format(actual, goal)
 
 class PackedStructField(object):
     def __init__(self, name, fmt, *args):
@@ -43,9 +55,18 @@ class PackedStruct(object):
 
     @classmethod
     def fromfile(cls, filename):
-        obj = cls()
-        obj.parse(ConstBitStream(filename=filename))
-        return obj
+        return cls.fromstream(ConstBitStream(filename=filename))
+        
+    @classmethod
+    def fromstream(cls, s, num=1):
+        objs = []
+        for _ in range(num):
+            obj = cls()
+            obj.parse(s)
+            objs.append(obj)
+        if num == 1:
+            return objs[0]
+        return objs
 
     def parse(self, s):
         self.s = s
@@ -53,7 +74,7 @@ class PackedStruct(object):
         for (name, field) in self.fields.iteritems():
             if field.offset:
                 assert (s.bytepos - _start_offset) == field.offset, \
-                    'Incorrect offset: Expected %x, Got %x' %(s.bytepos, field.offset)
+                    'Incorrect offset: Expected %x, Got %x' %(field.offset, s.bytepos - _start_offset)
             setattr(self, name, s.read(field.fmt))
             
     def __repr__(self):

@@ -2,10 +2,10 @@ from setuptools import setup
 
 setup(
     name='Ichiko',
-    version='0.5.1',
+    version='0.6.0',
     author='Falaina',
     author_email='falaina@falaina.net',
-    url='kaworu.falaina.net:ichiko',
+    url='http://github.com/Falaina/ichiko',
     packages=['ichiko'],
     description='Personal Utilities',
     install_requires=[
